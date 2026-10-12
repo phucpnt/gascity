@@ -255,6 +255,9 @@ function stalledRow(
   nowMs: number,
 ): BeadAttentionRow | null {
   if (bead.status !== 'in_progress') return null;
+  // A workflow root (`gc.kind=workflow`) is never assigned: its steps carry
+  // the sessions, and each in-progress step gets its own stall check.
+  if (bead.metadata?.['gc.kind'] === 'workflow') return null;
   const assignee = bead.assignee?.trim() ?? '';
   const detail = stalledDetail(bead, assignee, sessions, nowMs);
   if (detail === null) return null;

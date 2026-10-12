@@ -170,6 +170,20 @@ describe('stalled in-progress detection (gp-6xd)', () => {
     ]);
   });
 
+  it('never marks an in-progress workflow root stalled: its steps carry the sessions', () => {
+    const rows = select({
+      beads: [
+        bead({
+          id: 'B-root',
+          status: 'in_progress',
+          updated_at: '2026-06-07T10:00:00.000Z',
+          metadata: { 'gc.kind': 'workflow' },
+        }),
+      ],
+    });
+    expect(rows).toEqual([]);
+  });
+
   it('marks an in-progress bead as stalled when no session resolves to the assignee', () => {
     const rows = select({
       beads: [inProgress()],
