@@ -12076,6 +12076,18 @@ export type GetV0CityByCityNameBeadsData = {
          * Include closed beads.
          */
         all?: boolean;
+        /**
+         * Exact metadata key=value filter. Repeat to require every pair; values may contain commas or equals signs.
+         */
+        metadata?: Array<string> | null;
+        /**
+         * Require metadata key existence, including keys with empty values. Repeat to require every key.
+         */
+        has_metadata?: Array<string> | null;
+        /**
+         * Parent selector: omit for all, 'none' for no parent, 'any' for any parent, otherwise an exact parent bead ID.
+         */
+        parent?: string;
     };
     url: '/v0/city/{cityName}/beads';
 };

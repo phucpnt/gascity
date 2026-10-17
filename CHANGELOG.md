@@ -219,6 +219,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Bead metadata and parent filters in the dashboard and API.** The Beads
+  board supports exact metadata values, key existence, and all/no/any/exact
+  parent selection with bookmarkable URLs. `GET /beads` accepts repeated
+  `metadata=key=value`, repeated `has_metadata=key`, and `parent` selectors.
+  Filters combine with rig/status and run before pagination and totals;
+  no city-specific metadata vocabulary is built into the platform.
+
 - **`gc agent is-foreign <identity>` reports whether this city can vouch for
   a claim's assignee.** It exits 0 (`local`) when the identity resolves
   against this city's roster, or when one of this city's own session records,

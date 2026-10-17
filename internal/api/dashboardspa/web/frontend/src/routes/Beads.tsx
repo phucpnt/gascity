@@ -9,6 +9,7 @@ import { resourceAttentionSeverity } from '../attention/routeHighlight';
 import { BeadAttentionPanel } from '../components/beads/BeadAttentionPanel';
 import { BeadBoardSection } from '../components/beads/BeadBoardSection';
 import { BeadDetailModal } from '../components/BeadDetailModal';
+import { BeadQueryFilters, type BeadQuerySelectors } from '../components/beads/BeadQueryFilters';
 import { Button } from '../components/Button';
 import { FilterChips } from '../components/FilterChips';
 import { ListSearchBar } from '../components/ListSearchBar';
@@ -65,9 +66,18 @@ export function BeadsPage() {
   const readOnly = useReadOnly();
   const cityName = getActiveCity();
   const cityCacheKey = cityName ?? 'no-city';
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const selectedBeadParam = normalizeSelectedBeadParam(searchParams.get('bead'));
-  const [rigFilter, setRigFilter] = useState<string>(RIG_FILTER_ALL);
+  const querySelectors = readBeadQuerySelectors(searchParams);
+  const rigFilter = searchParams.get('rig') ?? RIG_FILTER_ALL;
+  const setRigFilter = useCallback((rig: string) => {
+    setSearchParams((previous) => {
+      const next = new URLSearchParams(previous);
+      if (rig === RIG_FILTER_ALL) next.delete('rig');
+      else next.set('rig', rig);
+      return next;
+    });
+  }, [setSearchParams]);
   // Closed beads dwarf the open queue (~199.7K closed vs ~1K open on this
   // city), so scanning them on every load makes the `task` query spike and
   // trips the fetch-window truncation warning. Default the board to the
@@ -95,11 +105,14 @@ export function BeadsPage() {
   const [newAgent, setNewAgent] = useState('');
 
   const { data, loading, error, refresh } = useCachedData(
-    `beads:board:${cityCacheKey}:${rigFilter}:${showClosed ? 'all' : 'open'}`,
+    `beads:board:${cityCacheKey}:${rigFilter}:${showClosed ? 'all' : 'open'}:${JSON.stringify(querySelectors)}`,
     () =>
       listSupervisorBeads({
         includeClosed: showClosed,
         ...(rigFilter === RIG_FILTER_ALL ? {} : { rigFilter }),
+        ...(querySelectors.metadata.length === 0 ? {} : { metadata: querySelectors.metadata }),
+        ...(querySelectors.hasMetadata.length === 0 ? {} : { hasMetadata: querySelectors.hasMetadata }),
+        ...(querySelectors.parent.length === 0 ? {} : { parent: querySelectors.parent }),
       }),
   );
   const rows = useMemo(() => data?.items ?? [], [data]);
@@ -146,11 +159,11 @@ export function BeadsPage() {
   }, [creating, filteredDispatchAgents, newAgent]);
 
   useEffect(() => {
+    if (rigs.data === undefined) return;
     if (rigFilter !== RIG_FILTER_ALL && !dispatchRigOptions.includes(rigFilter)) {
       setRigFilter(RIG_FILTER_ALL);
     }
-  }, [dispatchRigOptions, rigFilter]);
-
+  }, [dispatchRigOptions, rigFilter, rigs.data, setRigFilter]);
   const filteredRows = rows;
 
   const filters = useListFilters<SupervisorBead>({
@@ -455,7 +468,7 @@ export function BeadsPage() {
             onToggle={toggleStatusChip}
             legend="Status"
           />
-          {dispatchRigOptions.length > 1 && (
+          {dispatchRigOptions.length > 0 && (
             <label className="flex items-baseline gap-2 text-label">
               <span className="uppercase tracking-wider text-fg-muted">Rig</span>
               <select
@@ -473,6 +486,11 @@ export function BeadsPage() {
               </select>
             </label>
           )}
+          <BeadQueryFilters
+            key={JSON.stringify([querySelectors.metadata, querySelectors.hasMetadata])}
+            selectors={querySelectors}
+            onChange={(next) => updateBeadQuerySelectors(next, searchParams, setSearchParams)}
+          />
         </div>
       </div>
 
@@ -680,4 +698,26 @@ function buildSynopsis(
   if (rigFilter !== RIG_FILTER_ALL) summary = `${rigFilter}: ${summary}`;
   if (totalShown > filtered.length) summary += ` Showing ${filtered.length} of ${totalShown}.`;
   return summary;
+}
+function readBeadQuerySelectors(searchParams: URLSearchParams): BeadQuerySelectors {
+  return {
+    parent: searchParams.get('parent') ?? '',
+    metadata: searchParams.getAll('metadata'),
+    hasMetadata: searchParams.getAll('has_metadata'),
+  };
+}
+
+function updateBeadQuerySelectors(
+  selectors: BeadQuerySelectors,
+  searchParams: URLSearchParams,
+  setSearchParams: (next: URLSearchParams) => void,
+) {
+  const next = new URLSearchParams(searchParams);
+  next.delete('metadata');
+  next.delete('has_metadata');
+  next.delete('parent');
+  for (const clause of selectors.metadata) next.append('metadata', clause);
+  for (const key of selectors.hasMetadata) next.append('has_metadata', key);
+  if (selectors.parent !== '') next.set('parent', selectors.parent);
+  setSearchParams(next);
 }

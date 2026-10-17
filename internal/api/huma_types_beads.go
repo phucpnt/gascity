@@ -18,12 +18,15 @@ type BeadListInput struct {
 	CityScope
 	BlockingParam
 	PaginationParam
-	Status   string `query:"status" required:"false" doc:"Filter by bead status."`
-	Type     string `query:"type" required:"false" doc:"Filter by bead type."`
-	Label    string `query:"label" required:"false" doc:"Filter by label."`
-	Assignee string `query:"assignee" required:"false" doc:"Filter by assignee."`
-	Rig      string `query:"rig" required:"false" doc:"Filter by rig."`
-	All      bool   `query:"all" required:"false" doc:"Include closed beads."`
+	Status      string   `query:"status" required:"false" doc:"Filter by bead status."`
+	Type        string   `query:"type" required:"false" doc:"Filter by bead type."`
+	Label       string   `query:"label" required:"false" doc:"Filter by label."`
+	Assignee    string   `query:"assignee" required:"false" doc:"Filter by assignee."`
+	Rig         string   `query:"rig" required:"false" doc:"Filter by rig."`
+	All         bool     `query:"all" required:"false" doc:"Include closed beads."`
+	Metadata    []string `query:"metadata,explode" required:"false" doc:"Exact metadata key=value filter. Repeat to require every pair; values may contain commas or equals signs."`
+	HasMetadata []string `query:"has_metadata,explode" required:"false" doc:"Require metadata key existence, including keys with empty values. Repeat to require every key."`
+	Parent      string   `query:"parent" required:"false" doc:"Parent selector: omit for all, 'none' for no parent, 'any' for any parent, otherwise an exact parent bead ID."`
 }
 
 // BeadReadyInput is the Huma input for GET /v0/city/{cityName}/beads/ready.

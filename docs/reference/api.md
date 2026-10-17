@@ -75,6 +75,41 @@ The spec is the full reference. A brief summary of the surfaces:
 - **Config & packs.** Per-city config and pack metadata under
   `/v0/city/{cityName}/config` and `/v0/city/{cityName}/packs`.
 
+## Filter beads
+
+`GET /v0/city/{cityName}/beads` accepts these additional selectors alongside
+`rig`, `status`, `type`, `label`, and `assignee`:
+
+| Parameter | Matches |
+|---|---|
+| `metadata=key=value` | The key exists with exactly that value. Repeat the parameter to require several pairs. |
+| `has_metadata=key` | The key exists, including when its value is empty. Repeat to require several keys. |
+| `parent=none` | No parent. |
+| `parent=any` | A nonempty parent. |
+| `parent=<bead-id>` | That exact parent. |
+
+Omitting a selector leaves that field unrestricted. All populated selectors
+combine with AND. Values are literal: commas, equals signs, and whitespace
+inside metadata values are preserved. Conflicting values for the same key,
+malformed pairs, and invalid metadata keys return HTTP 400.
+
+For example, show top-level chat requests from one rig:
+
+```bash
+curl --get 'http://127.0.0.1:8372/v0/city/my-city/beads' \
+  --data-urlencode 'rig=my-project' \
+  --data-urlencode 'metadata=source=chat' \
+  --data-urlencode 'has_metadata=thread_id' \
+  --data-urlencode 'parent=none' \
+  --data-urlencode 'all=true'
+```
+
+Filtering happens before totals, page limits, and continuation cursors are
+calculated. Filtered requests may hydrate all matching candidates rather than
+use the count-and-limit fast path, so broad history queries can cost more.
+Metadata key names are supplied by your configuration; the API assigns no
+special meaning to a source or thread key.
+
 ## Request and response headers
 
 Every operation's header contract appears in the OpenAPI spec — if a

@@ -84,6 +84,15 @@ a sanctioned bypass of the worker boundary. Do not add others; see
   `npm run preview -- --host 127.0.0.1 --port <port>` from
   `internal/api/dashboardspa/web/frontend` after `make dashboard-build-npm`
 
+
+## Bead list selectors
+
+Metadata equality, metadata-key existence, and parent selectors on `/beads`
+are generic; never encode a pack's source/thread keys or role names in Go.
+Apply residual selectors before totals, cursor boundaries, and page limits.
+Reads with these selectors bypass the Count/LIMIT fast path: store counters
+cannot account for HTTP-only key-existence or parent-presence predicates.
+
 ## Fresh active-work lookup
 
 Batch a session's assignee aliases into one live `List` call per bead store,

@@ -36,6 +36,10 @@ var beadUpdateDescription = fmt.Sprintf("Applies the update. When it changes the
 // so the same request returns the same page on every call and a truncated
 // response always carries next_cursor for the remainder (#3208).
 func (s *Server) humaHandleBeadList(ctx context.Context, input *BeadListInput) (*ListOutput[beads.Bead], error) {
+	selectors, err := parseBeadListSelectors(input)
+	if err != nil {
+		return nil, err
+	}
 	bp := input.toBlockingParams()
 	blocking := bp.isBlocking()
 	if blocking {
@@ -120,7 +124,8 @@ func (s *Server) humaHandleBeadList(ctx context.Context, input *BeadListInput) (
 	boundedFetch := 0
 	var boundedCounts map[int]int
 	var hydrateLegs map[int]bool
-	if input.All && len(assigneeTerms) == 1 {
+	// Residual selectors must run before any store LIMIT or Count.
+	if input.All && len(assigneeTerms) == 1 && !selectors.active() {
 		// limit+1: the seek boundary rides on each store query and is enforced
 		// Go-side, so a store returns only rows after the boundary — one extra
 		// row is the has-more signal (Counts are un-seeked totals and cannot tell).
@@ -158,6 +163,7 @@ func (s *Server) humaHandleBeadList(ctx context.Context, input *BeadListInput) (
 				// (ga-8lyxc). See beads.FederatedReadTier.
 				TierMode: beads.FederatedReadTier,
 			}
+			selectors.apply(&query)
 			if !query.HasFilter() {
 				query.AllowScan = true
 			}
@@ -221,6 +227,9 @@ func (s *Server) humaHandleBeadList(ctx context.Context, input *BeadListInput) (
 				boundedCounts[i] = len(list)
 			}
 			for _, b := range list {
+				if !selectors.matches(b) {
+					continue
+				}
 				if boundedMode && !legBounded && seek != nil && !seek.After(b, beads.SortCreatedDesc) {
 					// A hydrated leg carries no store-side seek boundary (that is
 					// what made its row count the un-seeked total), so the page

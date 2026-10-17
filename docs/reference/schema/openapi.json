@@ -31647,6 +31647,48 @@
               "description": "Include closed beads.",
               "type": "boolean"
             }
+          },
+          {
+            "description": "Exact metadata key=value filter. Repeat to require every pair; values may contain commas or equals signs.",
+            "explode": true,
+            "in": "query",
+            "name": "metadata",
+            "schema": {
+              "description": "Exact metadata key=value filter. Repeat to require every pair; values may contain commas or equals signs.",
+              "items": {
+                "type": "string"
+              },
+              "type": [
+                "array",
+                "null"
+              ]
+            }
+          },
+          {
+            "description": "Require metadata key existence, including keys with empty values. Repeat to require every key.",
+            "explode": true,
+            "in": "query",
+            "name": "has_metadata",
+            "schema": {
+              "description": "Require metadata key existence, including keys with empty values. Repeat to require every key.",
+              "items": {
+                "type": "string"
+              },
+              "type": [
+                "array",
+                "null"
+              ]
+            }
+          },
+          {
+            "description": "Parent selector: omit for all, 'none' for no parent, 'any' for any parent, otherwise an exact parent bead ID.",
+            "explode": false,
+            "in": "query",
+            "name": "parent",
+            "schema": {
+              "description": "Parent selector: omit for all, 'none' for no parent, 'any' for any parent, otherwise an exact parent bead ID.",
+              "type": "string"
+            }
           }
         ],
         "responses": {

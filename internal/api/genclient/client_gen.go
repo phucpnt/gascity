@@ -9782,6 +9782,15 @@ type GetV0CityByCityNameBeadsParams struct {
 
 	// All Include closed beads.
 	All *bool `form:"all,omitempty" json:"all,omitempty"`
+
+	// Metadata Exact metadata key=value filter. Repeat to require every pair; values may contain commas or equals signs.
+	Metadata *[]string `form:"metadata,omitempty" json:"metadata,omitempty"`
+
+	// HasMetadata Require metadata key existence, including keys with empty values. Repeat to require every key.
+	HasMetadata *[]string `form:"has_metadata,omitempty" json:"has_metadata,omitempty"`
+
+	// Parent Parent selector: omit for all, 'none' for no parent, 'any' for any parent, otherwise an exact parent bead ID.
+	Parent *string `form:"parent,omitempty" json:"parent,omitempty"`
 }
 
 // CreateBeadParams defines parameters for CreateBead.
@@ -25584,6 +25593,54 @@ func NewGetV0CityByCityNameBeadsRequest(server string, cityName string, params *
 		if params.All != nil {
 
 			if queryFrag, err := runtime.StyleParamWithOptions("form", false, "all", *params.All, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "boolean", Format: ""}); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.Metadata != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "metadata", *params.Metadata, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "array", Format: ""}); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.HasMetadata != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "has_metadata", *params.HasMetadata, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "array", Format: ""}); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.Parent != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", false, "parent", *params.Parent, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
 				return nil, err
 			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
 				return nil, err

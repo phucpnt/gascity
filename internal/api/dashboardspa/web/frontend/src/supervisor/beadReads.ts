@@ -20,6 +20,9 @@ export interface ListSupervisorBeadsOptions {
   includeClosed?: boolean;
   includeBookkeeping?: boolean;
   rigFilter?: string;
+  metadata?: readonly string[];
+  hasMetadata?: readonly string[];
+  parent?: string;
   limit?: number;
   city?: string;
   signal?: AbortSignal;
@@ -52,12 +55,18 @@ export async function listSupervisorBeads(
   const cityName = options.city ?? activeCityOrThrow('list supervisor beads');
   const limit = options.limit ?? BEADS_FETCH_LIMIT;
   const rigFilter = options.rigFilter?.trim() ?? '';
+  const metadata = options.metadata ?? [];
+  const hasMetadata = options.hasMetadata ?? [];
+  const parent = options.parent;
   const includeClosed = options.includeClosed ?? false;
   const includeBookkeeping = options.includeBookkeeping ?? false;
   const baseQuery: NonNullable<GetV0CityByCityNameBeadsData['query']> = {
     limit,
     ...(includeClosed ? { all: true } : {}),
     ...(rigFilter.length === 0 ? {} : { rig: rigFilter }),
+    ...(metadata.length === 0 ? {} : { metadata: [...metadata] }),
+    ...(hasMetadata.length === 0 ? {} : { has_metadata: [...hasMetadata] }),
+    ...(parent === undefined || parent.length === 0 ? {} : { parent }),
   };
   // The windowed list is newest-created-first, so long-running in-progress work
   // ages out of it — exactly the beads an operator most needs to see (gp-6xd
@@ -69,6 +78,9 @@ export async function listSupervisorBeads(
     limit,
     status: 'in_progress',
     ...(rigFilter.length === 0 ? {} : { rig: rigFilter }),
+    ...(metadata.length === 0 ? {} : { metadata: [...metadata] }),
+    ...(hasMetadata.length === 0 ? {} : { has_metadata: [...hasMetadata] }),
+    ...(parent === undefined || parent.length === 0 ? {} : { parent }),
   };
   const listWith = (query: NonNullable<GetV0CityByCityNameBeadsData['query']>) =>
     options.signal === undefined
