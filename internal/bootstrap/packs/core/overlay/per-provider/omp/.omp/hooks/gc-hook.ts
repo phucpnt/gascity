@@ -11,7 +11,7 @@
 import { execFileSync } from "node:child_process";
 import type { ExtensionAPI } from "@oh-my-pi/pi-coding-agent";
 
-const GC_OMP_HOOK_VERSION = 2;
+const GC_OMP_HOOK_VERSION = 3;
 const PATH_PREFIX =
   `/opt/homebrew/bin:/usr/local/bin:${process.env.HOME}/go/bin:${process.env.HOME}/.local/bin:`;
 
@@ -85,5 +85,19 @@ export default function gascityOmpExtension(pi: ExtensionAPI) {
     if (systemPrompt !== event.systemPrompt) {
       return { systemPrompt };
     }
+  });
+
+  // Stamp the session bead at every turn end so a slow/idle agent is
+  // distinguishable from a working one without reading the transcript.
+  // Heartbeats keep the session bead's updated_at fresh, so bead state alone
+  // cannot tell "finished answer, idle" from "still mid-turn"; this stamp is
+  // the signal pending_watch reads into the slow verdict.
+  pi.on("turn_end", (_event, ctx) => {
+    const sessionId = process.env.GC_SESSION_ID;
+    if (!sessionId) return;
+    run(
+      ["bd", "update", sessionId, "--set-metadata", `gc.turn_ended_at=${new Date().toISOString()}`],
+      ctx.cwd,
+    );
   });
 }

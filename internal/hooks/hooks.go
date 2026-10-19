@@ -36,7 +36,7 @@ const (
 	managedPiHookVersion       = 9
 	managedOpenCodeHookVersion = 8
 	managedMimoCodeHookVersion = 4
-	managedOmpHookVersion      = 2
+	managedOmpHookVersion      = 3
 )
 
 var (
@@ -440,6 +440,7 @@ func ompHookNeedsUpgrade(existing []byte) bool {
 		!strings.Contains(content, `pi.on("session_start"`) ||
 		!strings.Contains(content, `pi.on("session_compact"`) ||
 		!strings.Contains(content, `pi.on("before_agent_start"`) ||
+		!strings.Contains(content, `pi.on("turn_end"`) ||
 		!strings.Contains(content, "logRunFailure") ||
 		!strings.Contains(content, `stdio: ["ignore", "pipe", "inherit"]`) {
 		return true
